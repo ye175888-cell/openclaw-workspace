@@ -103,9 +103,25 @@ auto_capture:
 
 ## 安装
 
+### 自动安装（推荐）
+
 ```bash
-cd /mnt/skills/context-recall
-npm install  # 或 pip install -r requirements.txt
+cd /mnt/skills
+tar -xzf context-recall-v1.0.0.tar.gz
+bash context-recall/scripts/post-install.sh
+```
+
+自动配置：
+- ✅ AGENTS.md 自动执行钩子
+- ✅ Cron 定时归档
+- ✅ `recall` 命令快捷方式
+
+### 手动安装
+
+```bash
+cd /mnt/skills
+ln -s /path/to/context-recall context-recall
+node context-recall/scripts/install.js
 ```
 
 ## 依赖
