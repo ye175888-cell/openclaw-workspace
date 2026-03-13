@@ -16,8 +16,17 @@
 
 ## 快速安装
 
+### 方式 1：一行命令（推荐）
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ye175888-cell/openclaw-workspace/main/skills/install-context-recall.sh | bash
+```
+
+### 方式 2：手动安装
+
 ```bash
 cd /mnt/skills
+wget https://github.com/ye175888-cell/openclaw-workspace/raw/main/skills/context-recall-v1.0.0.tar.gz
 tar -xzf context-recall-v1.0.0.tar.gz
 bash context-recall/scripts/post-install.sh
 ```
