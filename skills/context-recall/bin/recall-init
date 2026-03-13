@@ -41,6 +41,12 @@ async function main() {
   // 输出 JSON 供调用者使用
   console.log('\n---JSON---');
   console.log(JSON.stringify(context, null, 2));
+  
+  // 输出环境变量供 shell 使用
+  console.log('\n---EXPORT---');
+  console.log(`export CONTEXT_RECALL_SESSION_ID="${Date.now()}"`);
+  console.log(`export CONTEXT_RECALL_LOG_FILE="${new MemoryStore().dailyDir}/session-${Date.now()}.json"`);
+  console.log(`export CONTEXT_RECALL_ACTIVE="true"`);
 }
 
 main().catch(err => {

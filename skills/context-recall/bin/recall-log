@@ -1,0 +1,62 @@
+#!/usr/bin/env node
+/**
+ * recall-log - 快速记录单条消息
+ * Usage: recall-log <user|assistant> "message content"
+ */
+const fs = require('fs').promises;
+const path = require('path');
+
+const MEMORY_DIR = process.env.MEMORY_DIR || '/mnt/memory';
+const SESSION_LOGS_DIR = path.join(MEMORY_DIR, 'session-logs');
+
+async function main() {
+  const role = process.argv[2];
+  const content = process.argv.slice(3).join(' ');
+  
+  if (!role || !content) {
+    console.log('Usage: recall-log <user|assistant> "message content"');
+    console.log('Example: recall-log user "Hello there"');
+    process.exit(1);
+  }
+  
+  if (!['user', 'assistant'].includes(role)) {
+    console.error('Role must be "user" or "assistant"');
+    process.exit(1);
+  }
+  
+  // 获取或创建当前会话日志
+  const today = new Date().toISOString().split('T')[0];
+  const sessionFile = path.join(SESSION_LOGS_DIR, `session-${today}.json`);
+  
+  await fs.mkdir(SESSION_LOGS_DIR, { recursive: true });
+  
+  let session = { messages: [] };
+  try {
+    const data = await fs.readFile(sessionFile, 'utf8');
+    session = JSON.parse(data);
+  } catch {
+    // 新会话
+    session = {
+      sessionId: `session-${today}`,
+      startTime: new Date().toISOString(),
+      messages: []
+    };
+  }
+  
+  // 添加消息
+  session.messages.push({
+    role,
+    content,
+    timestamp: new Date().toISOString()
+  });
+  
+  // 保存
+  await fs.writeFile(sessionFile, JSON.stringify(session, null, 2), 'utf8');
+  
+  // 静默成功（不输出，避免污染对话）
+}
+
+main().catch(err => {
+  // 静默错误
+  process.exit(0);
+});

@@ -20,14 +20,17 @@ async function main() {
   console.log('📝 生成会话摘要...\n');
   
   // 读取会话日志
-  let messages = [];
+  let sessionData;
   try {
     const content = await fs.readFile(logFile, 'utf8');
-    messages = JSON.parse(content);
+    sessionData = JSON.parse(content);
   } catch (err) {
     console.error('❌ 无法读取日志文件:', err.message);
     process.exit(1);
   }
+  
+  // 支持两种格式：直接消息数组 或 包含 messages 的对象
+  const messages = Array.isArray(sessionData) ? sessionData : (sessionData.messages || []);
   
   // 生成摘要
   const summarizer = new Summarizer();

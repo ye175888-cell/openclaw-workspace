@@ -1,0 +1,16 @@
+{
+  "sessionId": "session-2026-03-13",
+  "startTime": "2026-03-13T08:24:57.898Z",
+  "messages": [
+    {
+      "role": "user",
+      "content": "测试消息记录功能",
+      "timestamp": "2026-03-13T08:24:57.898Z"
+    },
+    {
+      "role": "assistant",
+      "content": "收到，已记录",
+      "timestamp": "2026-03-13T08:24:57.940Z"
+    }
+  ]
+}

@@ -13,9 +13,33 @@ Before doing anything else:
 1. Read `SOUL.md` — this is who you are
 2. Read `USER.md` — this is who you're helping
 3. Read `SESSION-STATE.md` — active working memory (current task context)
-4. **Initialize ContextRecall** — run `node skills/context-recall/bin/recall-init` to load relevant memories
+4. **Initialize ContextRecall** — run session initialization:
+   ```bash
+   source /mnt/skills/context-recall/scripts/auto-integrate.sh
+   node /mnt/skills/context-recall/bin/recall-init --query="$USER_FIRST_MESSAGE"
+   ```
 5. Read `memory/YYYY-MM-DD.md` (today + yesterday) for recent context
 6. **If in MAIN SESSION** (direct chat with your human): Also read `MEMORY.md`
+
+### 📝 Automatic Session Logging
+
+ContextRecall automatically logs all messages when integrated. To enable:
+
+```bash
+# At session start (already done in step 4 above)
+source /mnt/skills/context-recall/scripts/auto-integrate.sh
+
+# Log user messages (call after receiving each message)
+recall_log_user "$USER_MESSAGE"
+
+# Log assistant responses (call before sending response)
+recall_log_assistant "$ASSISTANT_RESPONSE"
+
+# At session end (generates summary automatically)
+recall_end_session
+```
+
+**Note:** In practice, OpenClaw's runtime handles message logging automatically when the skill is active.
 
 Don't ask permission. Just do it.
 

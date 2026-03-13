@@ -1,0 +1,142 @@
+#!/usr/bin/env node
+/**
+ * recall-auto - 自动执行入口
+ * 由 AGENTS.md 或 OpenClaw 钩子调用
+ */
+const SessionLogger = require('../lib/session-logger');
+const Retriever = require('../lib/retriever');
+
+const COMMAND = process.argv[2];
+
+async function main() {
+  switch (COMMAND) {
+    case 'start':
+      await sessionStart();
+      break;
+    case 'message':
+      await logMessage();
+      break;
+    case 'end':
+      await sessionEnd();
+      break;
+    default:
+      console.log('Usage: recall-auto <start|message|end>');
+      console.log('  start  - Initialize session logging');
+      console.log('  message - Log current message (reads from stdin)');
+      console.log('  end    - Finalize session and generate summary');
+      process.exit(1);
+  }
+}
+
+// 会话启动
+async function sessionStart() {
+  const query = process.argv.slice(3).join(' ') || '';
+  
+  // 初始化日志
+  const logger = new SessionLogger();
+  const info = await logger.init();
+  
+  // 输出会话信息供后续使用
+  console.log('---SESSION_INFO---');
+  console.log(JSON.stringify(info));
+  
+  // 初始化记忆检索
+  const retriever = new Retriever();
+  await retriever.init();
+  
+  const context = await retriever.initSession(query);
+  
+  // 输出上下文供 AGENTS.md 使用
+  console.log('\n---CONTEXT---');
+  console.log(JSON.stringify(context, null, 2));
+  
+  // 保存会话信息到临时文件供后续使用
+  const fs = require('fs').promises;
+  const path = require('path');
+  const tmpFile = path.join(require('os').tmpdir(), 'context-recall-session.json');
+  await fs.writeFile(tmpFile, JSON.stringify(info), 'utf8');
+}
+
+// 记录消息
+async function logMessage() {
+  const fs = require('fs').promises;
+  const path = require('path');
+  const os = require('os');
+  
+  // 读取会话信息
+  const tmpFile = path.join(os.tmpdir(), 'context-recall-session.json');
+  let sessionInfo;
+  try {
+    sessionInfo = JSON.parse(await fs.readFile(tmpFile, 'utf8'));
+  } catch {
+    console.error('Session not initialized. Run recall-auto start first.');
+    process.exit(1);
+  }
+  
+  // 从 stdin 读取消息
+  const stdin = process.stdin;
+  stdin.setEncoding('utf8');
+  
+  let data = '';
+  stdin.on('data', chunk => data += chunk);
+  stdin.on('end', async () => {
+    const message = JSON.parse(data);
+    
+    // 加载现有会话
+    const SessionLogger = require('../lib/session-logger');
+    const session = await SessionLogger.load(sessionInfo.sessionId);
+    
+    if (session) {
+      // 追加消息
+      session.messages.push({
+        ...message,
+        timestamp: new Date().toISOString()
+      });
+      session.messageCount = session.messages.length;
+      session.lastUpdate = new Date().toISOString();
+      
+      await fs.writeFile(
+        sessionInfo.logFile,
+        JSON.stringify(session, null, 2),
+        'utf8'
+      );
+    }
+  });
+}
+
+// 会话结束
+async function sessionEnd() {
+  const fs = require('fs').promises;
+  const path = require('path');
+  const os = require('os');
+  
+  // 读取会话信息
+  const tmpFile = path.join(os.tmpdir(), 'context-recall-session.json');
+  let sessionInfo;
+  try {
+    sessionInfo = JSON.parse(await fs.readFile(tmpFile, 'utf8'));
+  } catch {
+    console.error('Session not initialized.');
+    process.exit(1);
+  }
+  
+  // 生成摘要
+  const { execSync } = require('child_process');
+  try {
+    const output = execSync(
+      `node "${path.join(__dirname, 'recall-end')}" --log="${sessionInfo.logFile}"`,
+      { encoding: 'utf8' }
+    );
+    console.log(output);
+  } catch (err) {
+    console.error('Failed to generate summary:', err.message);
+  }
+  
+  // 清理临时文件
+  await fs.unlink(tmpFile).catch(() => {});
+}
+
+main().catch(err => {
+  console.error('❌ Error:', err.message);
+  process.exit(1);
+});
