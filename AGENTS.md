@@ -13,33 +13,34 @@ Before doing anything else:
 1. Read `SOUL.md` — this is who you are
 2. Read `USER.md` — this is who you're helping
 3. Read `SESSION-STATE.md` — active working memory (current task context)
-4. **Initialize ContextRecall** — run session initialization:
+4. **Initialize ContextRecall** — auto-start session recording:
    ```bash
-   source /mnt/skills/context-recall/scripts/auto-integrate.sh
-   node /mnt/skills/context-recall/bin/recall-init --query="$USER_FIRST_MESSAGE"
+   source /mnt/skills/context-recall/hooks/session-hook.sh
+   recall_session_start "$USER_FIRST_MESSAGE"
    ```
 5. Read `memory/YYYY-MM-DD.md` (today + yesterday) for recent context
 6. **If in MAIN SESSION** (direct chat with your human): Also read `MEMORY.md`
 
-### 📝 Automatic Session Logging
+### 📝 Automatic Session Logging (Auto-enabled)
 
-ContextRecall automatically logs all messages when integrated. To enable:
+ContextRecall hooks are now active. The following functions are available:
 
 ```bash
-# At session start (already done in step 4 above)
-source /mnt/skills/context-recall/scripts/auto-integrate.sh
-
-# Log user messages (call after receiving each message)
+# Log user message (auto-called on each user input)
 recall_log_user "$USER_MESSAGE"
 
-# Log assistant responses (call before sending response)
+# Log assistant response (auto-called before each response)
 recall_log_assistant "$ASSISTANT_RESPONSE"
 
-# At session end (generates summary automatically)
-recall_end_session
+# End session and generate summary (call before session closes)
+recall_session_end
 ```
 
-**Note:** In practice, OpenClaw's runtime handles message logging automatically when the skill is active.
+**Session lifecycle:**
+1. `recall_session_start` — creates session log, loads relevant memories, shows reminders
+2. `recall_log_user` — appends user message to session log
+3. `recall_log_assistant` — appends assistant response to session log
+4. `recall_session_end` — generates summary, extracts tasks, archives session
 
 Don't ask permission. Just do it.
 

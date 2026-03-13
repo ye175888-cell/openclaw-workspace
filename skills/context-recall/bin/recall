@@ -1,0 +1,80 @@
+#!/bin/bash
+# recall - 统一入口
+# Usage: recall <command> [args]
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+case "$1" in
+  init|start)
+    shift
+    node "$SCRIPT_DIR/recall-init" "$@"
+    ;;
+  end|finish)
+    shift
+    node "$SCRIPT_DIR/recall-end" "$@"
+    ;;
+  search|find)
+    shift
+    node "$SCRIPT_DIR/recall-search" "$@"
+    ;;
+  log|record)
+    shift
+    node "$SCRIPT_DIR/recall-log" "$@"
+    ;;
+  capture|save)
+    shift
+    node "$SCRIPT_DIR/recall-capture" "$@"
+    ;;
+  tasks|todo)
+    shift
+    node "$SCRIPT_DIR/recall-tasks" "$@"
+    ;;
+  extract)
+    shift
+    node "$SCRIPT_DIR/recall-extract-tasks" "$@"
+    ;;
+  archive)
+    shift
+    node "$SCRIPT_DIR/recall-archive" "$@"
+    ;;
+  remind)
+    shift
+    node "$SCRIPT_DIR/recall-remind" "$@"
+    ;;
+  export)
+    shift
+    node "$SCRIPT_DIR/recall-export" "$@"
+    ;;
+  import)
+    shift
+    node "$SCRIPT_DIR/recall-import" "$@"
+    ;;
+  tags|tag)
+    shift
+    node "$SCRIPT_DIR/recall-tags" "$@"
+    ;;
+  visualize|viz)
+    shift
+    node "$SCRIPT_DIR/recall-visualize" "$@"
+    ;;
+  *)
+    echo "ContextRecall - Smart Memory System"
+    echo ""
+    echo "Usage: recall <command> [args]"
+    echo ""
+    echo "Commands:"
+    echo "  init, start      Initialize session"
+    echo "  end, finish      End session with summary"
+    echo "  search, find     Search memories"
+    echo "  log, record      Log a message"
+    echo "  capture, save    Capture important info"
+    echo "  tasks, todo      List pending tasks"
+    echo "  extract          Extract tasks from session"
+    echo "  archive          Archive old memories"
+    echo "  remind           Show upcoming reminders"
+    echo "  export           Export memories"
+    echo "  import           Import memories"
+    echo "  tags, tag        Manage tags"
+    echo "  visualize, viz   Generate visualization"
+    ;;
+esac
