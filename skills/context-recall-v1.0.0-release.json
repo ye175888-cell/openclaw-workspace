@@ -1,0 +1,64 @@
+{
+  "name": "context-recall",
+  "version": "1.0.0",
+  "description": "智能记忆系统，自动捕获会话摘要、基于查询检索相关上下文、管理分层记忆存储（日/周/月）。零外部依赖，本地优先设计。",
+  "description_en": "Smart memory system for OpenClaw agents with auto-capture, semantic retrieval, and tiered storage. Zero external dependencies, local-first design.",
+  "author": "OpenClaw Community",
+  "license": "MIT",
+  "keywords": ["memory", "context", "recall", "session", "persistence", "中文"],
+  "homepage": "https://github.com/ye175888-cell/openclaw-workspace/tree/main/skills/context-recall",
+  "repository": "https://github.com/ye175888-cell/openclaw-workspace.git",
+  "bugs": "https://github.com/ye175888-cell/openclaw-workspace/issues",
+  "download_url": "https://github.com/ye175888-cell/openclaw-workspace/releases/download/v1.0.0/context-recall-v1.0.0.tar.gz",
+  "size": "31KB",
+  "requirements": {
+    "node": ">=18.0.0",
+    "jq": "optional",
+    "cron": "optional"
+  },
+  "commands": [
+    { "name": "recall", "description": "统一入口" },
+    { "name": "recall-init", "description": "初始化会话" },
+    { "name": "recall-end", "description": "结束会话" },
+    { "name": "recall-search", "description": "关键词检索" },
+    { "name": "recall-ask", "description": "自然语言查询" },
+    { "name": "recall-capture", "description": "捕获信息" },
+    { "name": "recall-log", "description": "记录消息" },
+    { "name": "recall-tasks", "description": "列出待办" },
+    { "name": "recall-extract-tasks", "description": "智能提取待办" },
+    { "name": "recall-remind", "description": "任务提醒" },
+    { "name": "recall-export", "description": "导出记忆" },
+    { "name": "recall-import", "description": "导入记忆" },
+    { "name": "recall-tags", "description": "标签管理" },
+    { "name": "recall-visualize", "description": "可视化" },
+    { "name": "recall-archive", "description": "归档" },
+    { "name": "recall-merge", "description": "记忆合并" },
+    { "name": "recall-rate", "description": "记忆评分" }
+  ],
+  "features": [
+    "自动会话记录",
+    "智能检索（分层策略）",
+    "待办自动提取",
+    "任务到期提醒",
+    "导入导出（JSON/Markdown）",
+    "智能标签分类",
+    "可视化时间线",
+    "自然语言查询",
+    "记忆合并去重",
+    "用户评分反馈",
+    "定时自动归档",
+    "AGENTS.md 自动集成"
+  ],
+  "installation": "cd /mnt/skills && tar -xzf context-recall-v1.0.0.tar.gz && bash context-recall/scripts/post-install.sh",
+  "quick_start": "recall init --query=\"hello\" && recall search \"记忆\" && recall remind",
+  "language": "zh-CN",
+  "support": {
+    "issues": "https://github.com/ye175888-cell/openclaw-workspace/issues",
+    "docs": "https://github.com/ye175888-cell/openclaw-workspace/tree/main/skills/context-recall/docs"
+  },
+  "changelog": {
+    "1.0.0": "初始版本，完整功能集"
+  },
+  "created": "2026-03-13",
+  "updated": "2026-03-13"
+}
