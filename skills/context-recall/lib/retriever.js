@@ -83,19 +83,36 @@ class Retriever {
     };
   }
 
-  // 简单关键词提取
+  // 简单关键词提取（支持中文分词）
   extractKeywords(text) {
-    const words = text.toLowerCase()
-      .replace(/[^\u4e00-\u9fa5a-z0-9\s]/g, ' ')
-      .split(/\s+/)
-      .filter(w => w.length >= 2);
+    // 中文：按字符分割，保留2-4字词组
+    // 英文：按空格分割
+    const words = [];
+    
+    // 清理文本
+    const cleaned = text.toLowerCase().replace(/[^\u4e00-\u9fa5a-z0-9\s]/g, ' ');
+    
+    // 提取中文词组（滑动窗口）
+    const chineseMatches = cleaned.match(/[\u4e00-\u9fa5]{2,8}/g) || [];
+    chineseMatches.forEach(match => {
+      // 添加完整词组
+      words.push(match);
+      // 添加2字子串
+      for (let i = 0; i < match.length - 1; i++) {
+        words.push(match.slice(i, i + 2));
+      }
+    });
+    
+    // 提取英文单词
+    const englishWords = cleaned.match(/[a-z0-9]{2,}/g) || [];
+    words.push(...englishWords);
     
     const freq = {};
     words.forEach(w => freq[w] = (freq[w] || 0) + 1);
     
     return Object.entries(freq)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 15)
+      .slice(0, 20)
       .map(([w]) => w);
   }
 

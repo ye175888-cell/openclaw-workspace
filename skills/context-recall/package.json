@@ -1,0 +1,24 @@
+{
+  "name": "context-recall",
+  "version": "1.0.0",
+  "description": "Smart memory system for OpenClaw agents",
+  "main": "lib/index.js",
+  "bin": {
+    "recall-init": "./bin/recall-init",
+    "recall-end": "./bin/recall-end",
+    "recall-search": "./bin/recall-search",
+    "recall-capture": "./bin/recall-capture",
+    "recall-tasks": "./bin/recall-tasks"
+  },
+  "scripts": {
+    "test": "node test/test.js",
+    "install": "node scripts/install.js"
+  },
+  "keywords": ["openclaw", "skill", "memory", "context"],
+  "author": "OpenClaw Community",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {}
+}

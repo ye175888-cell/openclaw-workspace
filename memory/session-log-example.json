@@ -1,0 +1,8 @@
+[
+  {"role": "user", "content": "今天我们讨论记忆系统的设计"},
+  {"role": "assistant", "content": "好，我们设计一个分层记忆系统，解决上下文丢失问题。"},
+  {"role": "user", "content": "有什么核心功能？"},
+  {"role": "assistant", "content": "自动捕获、智能检索、分层存储。"},
+  {"role": "user", "content": "记住，工作目录是 /mnt"},
+  {"role": "assistant", "content": "已记录，工作目录设置为 /mnt。"}
+]

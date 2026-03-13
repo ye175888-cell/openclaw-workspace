@@ -1,0 +1,27 @@
+{
+  "name": "context-recall",
+  "version": "1.0.0",
+  "description": "Smart memory system for OpenClaw agents with auto-capture, semantic retrieval, and tiered storage",
+  "author": "OpenClaw Community",
+  "license": "MIT",
+  "keywords": ["memory", "context", "recall", "session", "persistence"],
+  "requirements": {
+    "node": ">=18.0.0"
+  },
+  "commands": {
+    "recall-init": "bin/recall-init",
+    "recall-end": "bin/recall-end",
+    "recall-search": "bin/recall-search",
+    "recall-capture": "bin/recall-capture",
+    "recall-tasks": "bin/recall-tasks"
+  },
+  "hooks": {
+    "session-start": "scripts/session-start.sh",
+    "session-end": "scripts/session-end.sh"
+  },
+  "config": {
+    "memory-dir": "memory",
+    "auto-capture": true,
+    "max-results": 5
+  }
+}

@@ -13,8 +13,9 @@ Before doing anything else:
 1. Read `SOUL.md` — this is who you are
 2. Read `USER.md` — this is who you're helping
 3. Read `SESSION-STATE.md` — active working memory (current task context)
-4. Read `memory/YYYY-MM-DD.md` (today + yesterday) for recent context
-5. **If in MAIN SESSION** (direct chat with your human): Also read `MEMORY.md`
+4. **Initialize ContextRecall** — run `node skills/context-recall/bin/recall-init` to load relevant memories
+5. Read `memory/YYYY-MM-DD.md` (today + yesterday) for recent context
+6. **If in MAIN SESSION** (direct chat with your human): Also read `MEMORY.md`
 
 Don't ask permission. Just do it.
 
@@ -24,11 +25,24 @@ Don't ask permission. Just do it.
 - Read it first to understand current task state
 - Acknowledge where we left off: "Continuing from [task]..."
 
+**Use ContextRecall for smart retrieval:**
+```bash
+# On session start - recall relevant memories based on user's first message
+node skills/context-recall/bin/recall-init --query="$USER_FIRST_MESSAGE"
+
+# When user asks about past context
+node skills/context-recall/bin/recall-search "$QUERY"
+
+# To capture important decisions in real-time
+node skills/context-recall/bin/recall-capture --type=decision --content="..."
+```
+
 **If context seems missing (user asks "where were we?"):**
-1. Read `memory/working-buffer.md` — danger zone exchanges
-2. Read today's + yesterday's daily notes
-3. Search MEMORY.md for relevant context
-4. Present recovered context: "Last we were working on X. Continue?"
+1. Run `recall-search` with user's query
+2. Read `memory/working-buffer.md` — danger zone exchanges
+3. Read today's + yesterday's daily notes
+4. Search MEMORY.md for relevant context
+5. Present recovered context: "Last we were working on X. Continue?"
 
 **Never ask "what were we doing?" — the files have the answer.**
 
@@ -55,10 +69,41 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 
 - **Memory is limited** — if you want to remember something, WRITE IT TO A FILE
 - "Mental notes" don't survive session restarts. Files do.
-- When someone says "remember this" → update `memory/YYYY-MM-DD.md` or relevant file
+- When someone says "remember this" → use `recall-capture` or update `memory/YYYY-MM-DD.md`
 - When you learn a lesson → update AGENTS.md, TOOLS.md, or the relevant skill
 - When you make a mistake → document it so future-you doesn't repeat it
 - **Text > Brain** 📝
+
+### 🧠 ContextRecall Integration
+
+**Smart memory system for persistent context across sessions.**
+
+**Commands:**
+```bash
+# Session start - initialize and load relevant memories
+node skills/context-recall/bin/recall-init --query="user's first message"
+
+# Search memories
+node skills/context-recall/bin/recall-search "what were we working on"
+
+# Capture important info
+node skills/context-recall/bin/recall-capture --type=decision --content="Use SQLite for storage"
+node skills/context-recall/bin/recall-capture --type=preference --content="Prefers concise responses"
+node skills/context-recall/bin/recall-capture --type=task --content="Review PR by Friday"
+
+# List pending tasks
+node skills/context-recall/bin/recall-tasks
+
+# Session end - generate summary (call before session closes)
+node skills/context-recall/bin/recall-end --log=/path/to/session-log.json
+```
+
+**Types:** decision, preference, task, fact
+
+**Storage tiers:**
+- Daily: `memory/daily/YYYY-MM-DD.md` — session summaries
+- Ontology: `memory/ontology/*.json` — structured knowledge
+- Index: `memory/index.json` — searchable metadata
 
 ## Red Lines
 

@@ -36,15 +36,20 @@ class MemoryStore {
     await this.updateIndex(date, 'daily', content);
   }
 
-  // 读取今日记忆
-  async loadToday() {
-    const today = new Date().toISOString().split('T')[0];
-    const file = path.join(this.dailyDir, `${today}.md`);
+  // 读取指定日期记忆
+  async loadDaily(date) {
+    const file = path.join(this.dailyDir, `${date}.md`);
     try {
       return await fs.readFile(file, 'utf8');
     } catch {
       return null;
     }
+  }
+
+  // 读取今日记忆
+  async loadToday() {
+    const today = new Date().toISOString().split('T')[0];
+    return await this.loadDaily(today);
   }
 
   // 加载最近 N 天记忆
@@ -119,19 +124,30 @@ class MemoryStore {
     await this.saveIndex(index);
   }
 
-  // 简单关键词提取
+  // 简单关键词提取（支持中文分词）
   extractKeywords(text) {
-    const words = text.toLowerCase()
-      .replace(/[^\u4e00-\u9fa5a-z0-9\s]/g, ' ')
-      .split(/\s+/)
-      .filter(w => w.length >= 2);
+    const words = [];
+    const cleaned = text.toLowerCase().replace(/[^\u4e00-\u9fa5a-z0-9\s]/g, ' ');
+    
+    // 提取中文词组（滑动窗口）
+    const chineseMatches = cleaned.match(/[\u4e00-\u9fa5]{2,8}/g) || [];
+    chineseMatches.forEach(match => {
+      words.push(match);
+      for (let i = 0; i < match.length - 1; i++) {
+        words.push(match.slice(i, i + 2));
+      }
+    });
+    
+    // 提取英文单词
+    const englishWords = cleaned.match(/[a-z0-9]{2,}/g) || [];
+    words.push(...englishWords);
     
     const freq = {};
     words.forEach(w => freq[w] = (freq[w] || 0) + 1);
     
     return Object.entries(freq)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
+      .slice(0, 20)
       .map(([w]) => w);
   }
 }
