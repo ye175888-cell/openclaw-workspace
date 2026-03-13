@@ -1,0 +1,47 @@
+#!/usr/bin/env node
+/**
+ * recall-search - 检索记忆
+ */
+const Retriever = require('../lib/retriever');
+
+async function main() {
+  const query = process.argv.slice(2).join(' ');
+  
+  if (!query) {
+    console.log('用法: recall-search <查询内容>');
+    console.log('示例: recall-search "API密钥"');
+    process.exit(1);
+  }
+  
+  const retriever = new Retriever();
+  await retriever.init();
+  
+  console.log(`🔍 搜索: "${query}"\n`);
+  
+  const results = await retriever.search(query, { limit: 5 });
+  
+  if (results.length === 0) {
+    console.log('❌ 未找到相关记忆');
+    process.exit(0);
+  }
+  
+  console.log(`✅ 找到 ${results.length} 条相关记忆:\n`);
+  
+  results.forEach((mem, i) => {
+    console.log(`${i + 1}. [${mem.date}] 相关度: ${(mem.score * 100).toFixed(1)}%`);
+    console.log(`   摘要: ${mem.summary}`);
+    if (mem.content) {
+      console.log(`   内容: ${mem.content.slice(0, 200)}...`);
+    }
+    console.log();
+  });
+  
+  // 输出 JSON
+  console.log('---JSON---');
+  console.log(JSON.stringify(results, null, 2));
+}
+
+main().catch(err => {
+  console.error('❌ 错误:', err.message);
+  process.exit(1);
+});

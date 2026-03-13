@@ -1,0 +1,49 @@
+#!/usr/bin/env node
+/**
+ * recall-init - 会话启动时调用
+ * 加载今日记忆 + 检索相关历史
+ */
+const Retriever = require('../lib/retriever');
+
+async function main() {
+  const query = process.argv.find(arg => arg.startsWith('--query='))?.split('=')[1];
+  
+  const retriever = new Retriever();
+  await retriever.init();
+  
+  console.log('🔍 初始化记忆系统...\n');
+  
+  const context = await retriever.initSession(query || '');
+  
+  // 输出今日记忆
+  if (context.today) {
+    console.log('📅 今日记忆:');
+    console.log(context.today.slice(0, 500) + '...\n');
+  }
+  
+  // 输出相关记忆
+  if (context.relevant.length > 0) {
+    console.log('🔗 相关记忆:');
+    context.relevant.forEach((mem, i) => {
+      console.log(`  ${i + 1}. [${mem.date}] ${mem.summary}`);
+    });
+    console.log();
+  }
+  
+  // 输出用户画像
+  if (context.profile) {
+    console.log('👤 用户画像:', JSON.stringify(context.profile, null, 2));
+    console.log();
+  }
+  
+  console.log('✅ 记忆系统初始化完成');
+  
+  // 输出 JSON 供调用者使用
+  console.log('\n---JSON---');
+  console.log(JSON.stringify(context, null, 2));
+}
+
+main().catch(err => {
+  console.error('❌ 错误:', err.message);
+  process.exit(1);
+});

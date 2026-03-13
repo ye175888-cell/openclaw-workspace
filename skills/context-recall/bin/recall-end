@@ -1,0 +1,73 @@
+#!/usr/bin/env node
+/**
+ * recall-end - 会话结束时调用
+ * 生成摘要并保存到每日记忆
+ */
+const fs = require('fs').promises;
+const path = require('path');
+const MemoryStore = require('../lib/memory-store');
+const Summarizer = require('../lib/summarizer');
+
+async function main() {
+  const sessionId = process.argv.find(arg => arg.startsWith('--session-id='))?.split('=')[1];
+  const logFile = process.argv.find(arg => arg.startsWith('--log='))?.split('=')[1];
+  
+  if (!logFile) {
+    console.error('❌ 请提供 --log=<会话日志文件>');
+    process.exit(1);
+  }
+  
+  console.log('📝 生成会话摘要...\n');
+  
+  // 读取会话日志
+  let messages = [];
+  try {
+    const content = await fs.readFile(logFile, 'utf8');
+    messages = JSON.parse(content);
+  } catch (err) {
+    console.error('❌ 无法读取日志文件:', err.message);
+    process.exit(1);
+  }
+  
+  // 生成摘要
+  const summarizer = new Summarizer();
+  const summary = summarizer.quickSummarize(messages);
+  
+  // 构建记忆文档
+  const date = new Date().toISOString().split('T')[0];
+  const memoryDoc = `# ${date} - Session Summary
+
+## 主题
+${summary.topics.map(t => `- ${t}`).join('\n') || '- (无)'}
+
+## 待办
+${summary.tasks.map(t => `- [ ] ${t.title}`).join('\n') || '- (无)'}
+
+## 统计
+- 消息数: ${summary.messageCount}
+- 会话ID: ${sessionId || 'unknown'}
+- 时间: ${summary.timestamp}
+
+## 原始记录
+<details>
+<summary>展开</summary>
+
+${messages.map(m => `**${m.role}**: ${m.content.slice(0, 200)}${m.content.length > 200 ? '...' : ''}`).join('\n\n')}
+
+</details>
+`;
+  
+  // 保存
+  const store = new MemoryStore();
+  await store.init();
+  await store.saveDaily(date, memoryDoc);
+  
+  console.log('✅ 摘要已保存到:', path.join(store.dailyDir, `${date}.md`));
+  console.log('\n摘要预览:');
+  console.log(memoryDoc.slice(0, 800) + '...');
+}
+
+main().catch(err => {
+  console.error('❌ 错误:', err.message);
+  process.exit(1);
+});

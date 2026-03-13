@@ -1,0 +1,60 @@
+#!/usr/bin/env node
+/**
+ * recall-capture - 实时捕获重要信息
+ */
+const MemoryStore = require('../lib/memory-store');
+
+async function main() {
+  const type = process.argv.find(arg => arg.startsWith('--type='))?.split('=')[1];
+  const content = process.argv.find(arg => arg.startsWith('--content='))?.split('=')[1];
+  
+  if (!type || !content) {
+    console.log('用法: recall-capture --type=<类型> --content=<内容>');
+    console.log('类型: decision, preference, task, fact');
+    process.exit(1);
+  }
+  
+  const store = new MemoryStore();
+  await store.init();
+  
+  // 根据类型保存到不同位置
+  switch (type) {
+    case 'decision':
+    case 'preference':
+      // 保存到长期记忆
+      const prefs = await store.loadOntology('preferences') || [];
+      prefs.push({
+        type,
+        content,
+        created: new Date().toISOString()
+      });
+      await store.saveOntology('preferences', prefs);
+      console.log(`✅ 已保存到长期记忆: ${content.slice(0, 50)}...`);
+      break;
+      
+    case 'task':
+      // 保存到待办
+      const tasks = await store.loadOntology('tasks') || [];
+      tasks.push({
+        title: content,
+        status: 'pending',
+        created: new Date().toISOString()
+      });
+      await store.saveOntology('tasks', tasks);
+      console.log(`✅ 已添加待办: ${content}`);
+      break;
+      
+    default:
+      // 保存到今日记忆
+      const date = new Date().toISOString().split('T')[0];
+      const today = await store.loadDaily(date) || `# ${date}\n\n`;
+      const updated = today + `\n## 捕获 [${type}]\n${content}\n`;
+      await store.saveDaily(date, updated);
+      console.log(`✅ 已保存到今日记忆: ${content.slice(0, 50)}...`);
+  }
+}
+
+main().catch(err => {
+  console.error('❌ 错误:', err.message);
+  process.exit(1);
+});

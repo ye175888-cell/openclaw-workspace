@@ -1,0 +1,29 @@
+#!/usr/bin/env node
+/**
+ * recall-tasks - 列出待办事项
+ */
+const MemoryStore = require('../lib/memory-store');
+
+async function main() {
+  const store = new MemoryStore();
+  await store.init();
+  
+  const tasks = await store.loadOntology('tasks') || [];
+  const pending = tasks.filter(t => t.status === 'pending');
+  
+  if (pending.length === 0) {
+    console.log('✅ 没有待办事项');
+    return;
+  }
+  
+  console.log(`📋 待办事项 (${pending.length}):\n`);
+  pending.forEach((task, i) => {
+    console.log(`${i + 1}. [ ] ${task.title}`);
+    console.log(`   创建于: ${task.created}`);
+  });
+}
+
+main().catch(err => {
+  console.error('❌ 错误:', err.message);
+  process.exit(1);
+});
