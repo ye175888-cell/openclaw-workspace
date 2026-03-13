@@ -1,0 +1,86 @@
+#!/usr/bin/env node
+/**
+ * recall-export - 导出记忆
+ */
+const fs = require('fs').promises;
+const path = require('path');
+
+const MEMORY_DIR = process.env.MEMORY_DIR || '/mnt/memory';
+
+async function main() {
+  const format = process.argv[2] || 'json';
+  const output = process.argv[3] || `memory-export-${Date.now()}.${format}`;
+  
+  console.log(`📤 导出记忆 (${format})...\n`);
+  
+  // 收集所有数据
+  const exportData = {
+    exportedAt: new Date().toISOString(),
+    version: '1.0',
+    memories: [],
+    tasks: [],
+    preferences: {}
+  };
+  
+  // 导出每日记忆
+  const dailyDir = path.join(MEMORY_DIR, 'daily');
+  try {
+    const files = await fs.readdir(dailyDir);
+    for (const file of files.filter(f => f.endsWith('.md'))) {
+      const content = await fs.readFile(path.join(dailyDir, file), 'utf8');
+      exportData.memories.push({
+        date: file.replace('.md', ''),
+        content,
+        type: 'daily'
+      });
+    }
+  } catch {}
+  
+  // 导出任务
+  const tasksFile = path.join(MEMORY_DIR, 'ontology', 'tasks.json');
+  try {
+    const tasks = JSON.parse(await fs.readFile(tasksFile, 'utf8'));
+    exportData.tasks = tasks;
+  } catch {}
+  
+  // 导出偏好
+  const prefsFile = path.join(MEMORY_DIR, 'ontology', 'preferences.json');
+  try {
+    const prefs = JSON.parse(await fs.readFile(prefsFile, 'utf8'));
+    exportData.preferences = prefs;
+  } catch {}
+  
+  // 根据格式输出
+  if (format === 'json') {
+    await fs.writeFile(output, JSON.stringify(exportData, null, 2), 'utf8');
+  } else if (format === 'markdown' || format === 'md') {
+    const md = generateMarkdown(exportData);
+    await fs.writeFile(output, md, 'utf8');
+  }
+  
+  console.log(`✅ 导出完成: ${output}`);
+  console.log(`   记忆: ${exportData.memories.length}`);
+  console.log(`   任务: ${exportData.tasks.length}`);
+}
+
+function generateMarkdown(data) {
+  let md = `# Memory Export\n\n`;
+  md += `导出时间: ${data.exportedAt}\n\n`;
+  
+  md += `## 记忆 (${data.memories.length})\n\n`;
+  for (const mem of data.memories) {
+    md += `### ${mem.date}\n\n${mem.content.slice(0, 500)}...\n\n---\n\n`;
+  }
+  
+  md += `## 任务 (${data.tasks.length})\n\n`;
+  for (const task of data.tasks.filter(t => t.status === 'pending')) {
+    md += `- [ ] ${task.title}${task.due ? ` (截止: ${task.due})` : ''}\n`;
+  }
+  
+  return md;
+}
+
+main().catch(err => {
+  console.error('❌ 错误:', err.message);
+  process.exit(1);
+});

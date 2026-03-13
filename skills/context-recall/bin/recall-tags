@@ -1,0 +1,92 @@
+#!/usr/bin/env node
+/**
+ * recall-tags - 标签管理
+ */
+const Tagger = require('../lib/tagger');
+const fs = require('fs').promises;
+const path = require('path');
+
+const MEMORY_DIR = process.env.MEMORY_DIR || '/mnt/memory';
+
+async function main() {
+  const action = process.argv[2] || 'stats';
+  const tagger = new Tagger();
+  
+  switch (action) {
+    case 'tag':
+      // 为指定日期打标签
+      const date = process.argv[3] || new Date().toISOString().split('T')[0];
+      const file = path.join(MEMORY_DIR, 'daily', `${date}.md`);
+      
+      try {
+        const content = await fs.readFile(file, 'utf8');
+        const tags = await tagger.tagMemory(date, content);
+        console.log(`✅ 已打标签: ${tags.join(', ') || '(无)'}`);
+      } catch {
+        console.error(`❌ 未找到记忆: ${date}`);
+      }
+      break;
+      
+    case 'search':
+      // 按标签搜索
+      const searchTag = process.argv[3];
+      if (!searchTag) {
+        console.log('Usage: recall-tags search <tag>');
+        process.exit(1);
+      }
+      
+      const results = await tagger.searchByTag(searchTag);
+      console.log(`🔍 标签 "${searchTag}" (${results.length} 条):\n`);
+      results.forEach(r => {
+        console.log(`  ${r.date} - ${r.tags.join(', ')}`);
+      });
+      break;
+      
+    case 'stats':
+      // 标签统计
+      const stats = await tagger.getTagStats();
+      console.log('📊 标签统计:\n');
+      Object.entries(stats).forEach(([tag, count]) => {
+        console.log(`  ${tag}: ${count}`);
+      });
+      break;
+      
+    case 'top':
+      // 热门标签
+      const top = await tagger.getTopTags(10);
+      console.log('🔥 热门标签:\n');
+      top.forEach(([tag, count], i) => {
+        console.log(`  ${i + 1}. ${tag} (${count})`);
+      });
+      break;
+      
+    case 'auto':
+      // 自动为所有记忆打标签
+      console.log('🏷️  自动打标签...\n');
+      
+      const dailyDir = path.join(MEMORY_DIR, 'daily');
+      const files = await fs.readdir(dailyDir);
+      let count = 0;
+      
+      for (const file of files.filter(f => f.endsWith('.md'))) {
+        const date = file.replace('.md', '');
+        const content = await fs.readFile(path.join(dailyDir, file), 'utf8');
+        const tags = await tagger.tagMemory(date, content);
+        if (tags.length > 0) {
+          console.log(`  ${date}: ${tags.join(', ')}`);
+          count++;
+        }
+      }
+      
+      console.log(`\n✅ 已为 ${count} 条记忆打标签`);
+      break;
+      
+    default:
+      console.log('Usage: recall-tags <tag|search|stats|top|auto>');
+  }
+}
+
+main().catch(err => {
+  console.error('❌ 错误:', err.message);
+  process.exit(1);
+});

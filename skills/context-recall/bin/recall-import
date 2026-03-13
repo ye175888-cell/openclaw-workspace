@@ -1,0 +1,103 @@
+#!/usr/bin/env node
+/**
+ * recall-import - 导入记忆
+ */
+const fs = require('fs').promises;
+const path = require('path');
+
+const MEMORY_DIR = process.env.MEMORY_DIR || '/mnt/memory';
+
+async function main() {
+  const inputFile = process.argv[2];
+  
+  if (!inputFile) {
+    console.log('Usage: recall-import <file.json|file.md>');
+    process.exit(1);
+  }
+  
+  console.log(`📥 导入记忆: ${inputFile}\n`);
+  
+  const content = await fs.readFile(inputFile, 'utf8');
+  const ext = path.extname(inputFile).toLowerCase();
+  
+  let data;
+  if (ext === '.json') {
+    data = JSON.parse(content);
+  } else if (ext === '.md' || ext === '.markdown') {
+    data = parseMarkdown(content);
+  } else {
+    console.error('❌ 不支持的格式，请使用 .json 或 .md');
+    process.exit(1);
+  }
+  
+  // 导入记忆
+  let importedMemories = 0;
+  if (data.memories) {
+    for (const mem of data.memories) {
+      const file = path.join(MEMORY_DIR, 'daily', `${mem.date}.md`);
+      await fs.writeFile(file, mem.content, 'utf8');
+      importedMemories++;
+    }
+  }
+  
+  // 导入任务
+  let importedTasks = 0;
+  if (data.tasks) {
+    const tasksFile = path.join(MEMORY_DIR, 'ontology', 'tasks.json');
+    let existing = [];
+    try {
+      existing = JSON.parse(await fs.readFile(tasksFile, 'utf8'));
+    } catch {}
+    
+    for (const task of data.tasks) {
+      const exists = existing.some(e => e.title === task.title);
+      if (!exists) {
+        existing.push({
+          ...task,
+          id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+          imported: true,
+          importedAt: new Date().toISOString()
+        });
+        importedTasks++;
+      }
+    }
+    
+    await fs.writeFile(tasksFile, JSON.stringify(existing, null, 2), 'utf8');
+  }
+  
+  console.log(`✅ 导入完成`);
+  console.log(`   记忆: ${importedMemories}`);
+  console.log(`   任务: ${importedTasks}`);
+}
+
+function parseMarkdown(content) {
+  // 简单解析 Markdown 格式
+  const data = { memories: [], tasks: [] };
+  
+  // 提取记忆（### 日期 格式）
+  const memMatches = content.matchAll(/### (\d{4}-\d{2}-\d{2})\n\n([\s\S]*?)(?=\n### |\n## |$)/g);
+  for (const match of memMatches) {
+    data.memories.push({
+      date: match[1],
+      content: match[2].trim(),
+      type: 'daily'
+    });
+  }
+  
+  // 提取任务（- [ ] 格式）
+  const taskMatches = content.matchAll(/- \[ \] (.+?)(?: \(截止: (.+?)\))?\n/g);
+  for (const match of taskMatches) {
+    data.tasks.push({
+      title: match[1].trim(),
+      due: match[2] || null,
+      status: 'pending'
+    });
+  }
+  
+  return data;
+}
+
+main().catch(err => {
+  console.error('❌ 错误:', err.message);
+  process.exit(1);
+});

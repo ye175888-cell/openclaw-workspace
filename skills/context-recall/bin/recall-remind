@@ -1,0 +1,53 @@
+#!/usr/bin/env node
+/**
+ * recall-remind - 任务提醒
+ * 会话启动时检查即将到期任务
+ */
+const TaskExtractor = require('../lib/task-extractor');
+
+async function main() {
+  const extractor = new TaskExtractor();
+  
+  // 检查即将到期（3天内）
+  const upcoming = await extractor.getUpcomingTasks(3);
+  
+  // 检查已逾期
+  const allTasks = await extractor.getTasks('pending');
+  const now = new Date();
+  const overdue = allTasks.filter(t => {
+    if (!t.due) return false;
+    return new Date(t.due) < now;
+  });
+  
+  // 输出提醒
+  if (upcoming.length === 0 && overdue.length === 0) {
+    console.log('✅ 没有即将到期或逾期的任务');
+    return;
+  }
+  
+  if (overdue.length > 0) {
+    console.log(`⚠️  逾期任务 (${overdue.length}):\n`);
+    overdue.forEach((t, i) => {
+      console.log(`  ${i + 1}. [逾期] ${t.title} (截止: ${t.due})`);
+    });
+    console.log();
+  }
+  
+  if (upcoming.length > 0) {
+    console.log(`⏰ 即将到期 (${upcoming.length}):\n`);
+    upcoming.forEach((t, i) => {
+      const daysLeft = Math.ceil((new Date(t.due) - now) / (1000 * 60 * 60 * 24));
+      const label = daysLeft === 0 ? '今天' : daysLeft === 1 ? '明天' : `${daysLeft}天后`;
+      console.log(`  ${i + 1}. [${label}] ${t.title} (${t.due})`);
+    });
+  }
+  
+  // 输出 JSON 供程序使用
+  console.log('\n---JSON---');
+  console.log(JSON.stringify({ overdue, upcoming }, null, 2));
+}
+
+main().catch(err => {
+  console.error('❌ 错误:', err.message);
+  process.exit(1);
+});
