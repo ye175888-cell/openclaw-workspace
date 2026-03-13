@@ -1,0 +1,17 @@
+# OpenClaw sensitive config
+.openclaw/
+
+# Local learning logs (optional)
+.learnings/
+
+# Session logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+*.swp
+*~
