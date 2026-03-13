@@ -1,0 +1,45 @@
+#!/usr/bin/env node
+/**
+ * recall-ask - 自然语言查询
+ * 用中文直接提问
+ */
+const NaturalQuery = require('../lib/natural-query');
+
+async function main() {
+  const question = process.argv.slice(2).join(' ');
+  
+  if (!question) {
+    console.log('🤖 ContextRecall 自然语言查询');
+    console.log('');
+    console.log('用法: recall-ask <问题>');
+    console.log('');
+    console.log('示例:');
+    console.log('  recall-ask "上周我们讨论了什么？"');
+    console.log('  recall-ask "API密钥放在哪？"');
+    console.log('  recall-ask "我还有什么待办？"');
+    console.log('  recall-ask "关于记忆系统的讨论有多少条？"');
+    process.exit(1);
+  }
+  
+  console.log(`🤔 ${question}\n`);
+  
+  const nq = new NaturalQuery();
+  await nq.init();
+  
+  const result = await nq.query(question);
+  
+  console.log(result.answer);
+  
+  // 输出详细结果
+  console.log('\n---DETAILS---');
+  console.log(JSON.stringify({
+    type: result.type,
+    keyword: result.keyword,
+    count: result.count || result.results?.length || result.tasks?.length
+  }, null, 2));
+}
+
+main().catch(err => {
+  console.error('❌ 错误:', err.message);
+  process.exit(1);
+});

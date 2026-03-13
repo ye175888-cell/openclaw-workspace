@@ -1,0 +1,67 @@
+#!/usr/bin/env node
+/**
+ * recall-rate - 记忆评分
+ */
+const Rating = require('../lib/rating');
+
+async function main() {
+  const action = process.argv[2] || 'stats';
+  const rating = new Rating();
+  
+  switch (action) {
+    case 'rate':
+      const memoryId = process.argv[3];
+      const score = parseInt(process.argv[4]);
+      const feedback = process.argv.slice(5).join(' ');
+      
+      if (!memoryId || !score || score < 1 || score > 5) {
+        console.log('用法: recall-rate rate <memory-id> <1-5> [反馈]');
+        process.exit(1);
+      }
+      
+      const result = await rating.rate(memoryId, score, feedback);
+      console.log(`⭐ ${score}/5 - ${result.message}`);
+      break;
+      
+    case 'stats':
+      const stats = await rating.getStats();
+      console.log('📊 评分统计:\n');
+      console.log(`  总评分数: ${stats.count}`);
+      console.log(`  平均分: ${stats.average}`);
+      console.log('\n  分布:');
+      Object.entries(stats.distribution).forEach(([star, count]) => {
+        const bar = '█'.repeat(count);
+        console.log(`    ${star}星: ${bar} ${count}`);
+      });
+      break;
+      
+    case 'top':
+      const top = await rating.getTopRated(10);
+      console.log('⭐ 高评分记忆:\n');
+      top.forEach((r, i) => {
+        console.log(`  ${i + 1}. [${r.rating}星] ${r.memoryId}`);
+        if (r.feedback) console.log(`      反馈: ${r.feedback}`);
+      });
+      break;
+      
+    case 'low':
+      const low = await rating.getLowRated(2);
+      console.log('⚠️  低评分记忆（可考虑删除）:\n');
+      low.forEach((r, i) => {
+        console.log(`  ${i + 1}. [${r.rating}星] ${r.memoryId}`);
+      });
+      break;
+      
+    default:
+      console.log('用法: recall-rate <rate|stats|top|low>');
+      console.log('  rate <id> <1-5> [反馈]  - 评分');
+      console.log('  stats                    - 统计');
+      console.log('  top                      - 高评分');
+      console.log('  low                      - 低评分');
+  }
+}
+
+main().catch(err => {
+  console.error('❌ 错误:', err.message);
+  process.exit(1);
+});

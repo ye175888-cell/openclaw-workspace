@@ -1,0 +1,21 @@
+#!/usr/bin/env node
+/**
+ * recall-merge - 记忆合并与去重
+ */
+const Merger = require('../lib/merger');
+
+async function main() {
+  const apply = process.argv.includes('--apply');
+  
+  const merger = new Merger();
+  const results = await merger.run(!apply);
+  
+  if (apply && results.length > 0) {
+    console.log('\n✅ 合并完成');
+  }
+}
+
+main().catch(err => {
+  console.error('❌ 错误:', err.message);
+  process.exit(1);
+});
