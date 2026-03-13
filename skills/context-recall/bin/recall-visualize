@@ -1,0 +1,29 @@
+#!/usr/bin/env node
+/**
+ * recall-visualize - 生成记忆可视化
+ */
+const Visualizer = require('../lib/visualizer');
+
+async function main() {
+  const action = process.argv[2] || 'timeline';
+  
+  const visualizer = new Visualizer();
+  await visualizer.init();
+  
+  switch (action) {
+    case 'timeline':
+      console.log('🎨 生成时间线...\n');
+      const output = await visualizer.generateTimeline();
+      console.log(`✅ 时间线已生成: ${output}`);
+      console.log(`   在浏览器中打开查看`);
+      break;
+      
+    default:
+      console.log('Usage: recall-visualize <timeline>');
+  }
+}
+
+main().catch(err => {
+  console.error('❌ 错误:', err.message);
+  process.exit(1);
+});
