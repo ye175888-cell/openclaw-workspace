@@ -1,0 +1,84 @@
+#!/usr/bin/env node
+/**
+ * recall-extract-tasks - 从会话中提取待办
+ */
+const fs = require('fs').promises;
+const TaskExtractor = require('../lib/task-extractor');
+
+async function main() {
+  const logFile = process.argv.find(arg => arg.startsWith('--log='))?.split('=')[1];
+  const action = process.argv[2] || 'extract';
+  
+  const extractor = new TaskExtractor();
+  
+  switch (action) {
+    case 'extract':
+      if (!logFile) {
+        console.log('Usage: recall-extract-tasks extract --log=<session-log.json>');
+        process.exit(1);
+      }
+      
+      // 读取会话
+      const content = await fs.readFile(logFile, 'utf8');
+      const session = JSON.parse(content);
+      const messages = session.messages || session;
+      
+      console.log(`🔍 从 ${messages.length} 条消息中提取待办...\n`);
+      
+      // 提取
+      const tasks = await extractor.extractFromSession(messages);
+      
+      if (tasks.length === 0) {
+        console.log('✅ 未发现新的待办事项');
+        return;
+      }
+      
+      console.log(`✅ 发现 ${tasks.length} 个待办事项:\n`);
+      tasks.forEach((t, i) => {
+        console.log(`${i + 1}. ${t.title}`);
+        console.log(`   来源: ${t.source} | 置信度: ${(t.confidence * 100).toFixed(0)}%`);
+        if (t.due) console.log(`   截止: ${t.due}`);
+        console.log();
+      });
+      
+      // 保存
+      const saved = await extractor.saveTasks(tasks);
+      console.log(`💾 已保存 ${saved.length} 个新待办`);
+      break;
+      
+    case 'list':
+      const allTasks = await extractor.getTasks('pending');
+      console.log(`📋 待办事项 (${allTasks.length}):\n`);
+      allTasks.forEach((t, i) => {
+        const due = t.due ? ` [截止: ${t.due}]` : '';
+        console.log(`${i + 1}. [ ] ${t.title}${due}`);
+      });
+      break;
+      
+    case 'upcoming':
+      const upcoming = await extractor.getUpcomingTasks(3);
+      console.log(`⏰ 即将到期 (${upcoming.length}):\n`);
+      upcoming.forEach((t, i) => {
+        console.log(`${i + 1}. [ ] ${t.title} [${t.due}]`);
+      });
+      break;
+      
+    case 'done':
+      const taskId = process.argv.find(arg => arg.startsWith('--id='))?.split('=')[1];
+      if (!taskId) {
+        console.log('Usage: recall-extract-tasks done --id=<task-id>');
+        process.exit(1);
+      }
+      const updated = await extractor.updateTaskStatus(taskId, 'done');
+      console.log(updated ? '✅ 已标记完成' : '❌ 任务未找到');
+      break;
+      
+    default:
+      console.log('Usage: recall-extract-tasks <extract|list|upcoming|done>');
+  }
+}
+
+main().catch(err => {
+  console.error('❌ 错误:', err.message);
+  process.exit(1);
+});
